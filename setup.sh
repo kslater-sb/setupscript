@@ -85,8 +85,8 @@ brew install --cask discord
 brew install awscli
 brew install ffmpeg
 brew install ffprobe
-brew install nmap 
-brew install amass
+#brew install nmap 
+#brew install amass
 brew install make
 brew install cmake
 brew install postgresql
@@ -95,7 +95,7 @@ brew install python
 brew install --cask private-internet-access
 
 # personal only 
-brew install --cask adobe-creative-cloud
+# brew install --cask adobe-creative-cloud
 
 
 mas install 497799835 
@@ -113,8 +113,8 @@ defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationc
 killall NotificationCenter
 
 
-wget https://github.com/glouel/AerialCompanion/releases/latest/download/AerialCompanion.dmg
-wget https://discord.com/api/download?platform=osx
+#wget https://github.com/glouel/AerialCompanion/releases/latest/download/AerialCompanion.dmg
+#wget https://discord.com/api/download?platform=osx
 
 
 echo "Running brew cleanup..."
