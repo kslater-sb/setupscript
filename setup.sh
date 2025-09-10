@@ -1,126 +1,172 @@
 #!/usr/bin/env bash
 
-# Install command-line tools using Homebrew.
+###############################################################################
+# macOS Setup Script for Apple Silicon
+# Installs Homebrew, apps, and applies customizations including Stage Manager
+###############################################################################
 
-# Ask for the administrator password upfront.
+# Ask for administrator password upfront
 sudo -v
 
-# Keep-alive: update existing `sudo` time stamp until the script has finished.
-while true; do
-    sudo -n true
-    sleep 60
-    kill -0 "$$" || exit
-done 2>/dev/null &
+# Keep-alive: update existing `sudo` timestamp until the script finishes
+while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
+###############################################################################
+# Basic System Tweaks
+###############################################################################
+
+# Unhide ~/Library
 chflags nohidden ~/Library
 
-# Show Hidden Files in Finder
-defaults write com.apple.finder AppleShowAllFiles YES
+# Prevent system sleep when plugged in
+sudo systemsetup -setcomputersleep Never
 
-# Show Path Bar in Finder
+# Finder settings
+defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+defaults write com.apple.finder AppleShowAllFiles -bool true
 defaults write com.apple.finder ShowPathbar -bool true
-
-# Show Status Bar in Finder
 defaults write com.apple.finder ShowStatusBar -bool true
+defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
+defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
+killall Finder
 
+# Dock settings
+defaults write com.apple.dock autohide-delay -float 0
+defaults write com.apple.dock autohide-time-modifier -float 0
+defaults write com.apple.dock tilesize -int 36
+defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock show-recents -bool false
+defaults write com.apple.dock minimize-to-application -bool true
+defaults write com.apple.dock enable-spring-load-actions-on-all-items -bool true
+defaults write com.apple.dock mineffect -string "scale"
+defaults write com.apple.dock static-only -bool true
+# Mission Control & Hot Corners
+defaults write com.apple.dock expose-animation-duration -float 0.1
+defaults write com.apple.dock mru-spaces -bool false
+defaults write com.apple.dock wvous-br-corner -int 4   # Desktop
+defaults write com.apple.dock wvous-bl-corner -int 5   # Start screensaver
+defaults write com.apple.dock wvous-tl-corner -int 2   # Mission Control
+defaults write com.apple.dock wvous-tr-corner -int 12  # Notification Center
+killall Dock
 
+# Screenshots
+mkdir -p ~/Screenshots
+defaults write com.apple.screencapture location -string "${HOME}/Screenshots"
+defaults write com.apple.screencapture type -string "png"
+killall SystemUIServer
 
-# Check for Homebrew, and then install it
-if test ! "$(which brew)"; then
-    echo "Installing homebrew..."
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+# Expand save/print panels by default
+defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+
+# Disable app launch quarantine dialog
+defaults write com.apple.LaunchServices LSQuarantine -bool false
+
+###############################################################################
+# Homebrew Installation & Updates
+###############################################################################
+
+# Check for Homebrew, install if missing
+if ! command -v brew &>/dev/null; then
+    echo "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     echo "Homebrew installed successfully"
-else
-    echo "Homebrew already installed!"
 fi
 
-# Install XCode Command Line Tools
-echo 'Checking to see if XCode Command Line Tools are installed...'
-brew config
+# Add Homebrew to PATH (Apple Silicon)
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
-# Updating Homebrew.
+# Install Xcode Command Line Tools if missing
+if ! xcode-select -p &>/dev/null; then
+    echo "Installing Xcode Command Line Tools..."
+    xcode-select --install
+else
+    echo "Xcode Command Line Tools already installed!"
+fi
+
+# Update Homebrew
 echo "Updating Homebrew..."
 brew update
-
-# Upgrade any already-installed formulae.
-echo "Upgrading Homebrew..."
 brew upgrade
 
+###############################################################################
+# Install Core Utilities & Packages
+###############################################################################
 
-
-# Install Git
-echo "Installing Git..."
 brew install git
-
-# Install Powerline fonts
-echo "Installing Powerline fonts..."
-git clone https://github.com/powerline/fonts.git
-cd fonts || exit
-sh -c ./install.sh
-
-cd 
-
-# Install other useful binaries.
-brew install speedtest_cli
-
-
-# Development tool casks
-brew install --cask --appdir="/Applications" visual-studio-code
-
-# Misc casks
-brew install --cask --appdir="/Applications" slack
-
-
-brew install go
-brew install golangci-lint
 brew install htop
 brew install micro
 brew install wget
-brew install link
-brew install youtube-dl
+brew install yt-dlp
 brew install tree
 brew install mas
 brew install jq
-brew install --cask discord
+brew install go
+brew install golangci-lint
 brew install awscli
 brew install ffmpeg
-brew install ffprobe
-#brew install nmap 
-#brew install amass
 brew install make
 brew install cmake
 brew install postgresql
-brew install --cask java
 brew install python
+brew install speedtest
+
+# Powerline fonts
+echo "Installing Powerline fonts..."
+git clone https://github.com/powerline/fonts.git --depth=1
+cd fonts && ./install.sh && cd .. && rm -rf fonts
+
+###############################################################################
+# GUI Apps via Homebrew Casks
+###############################################################################
+
+brew install --cask visual-studio-code
+brew install --cask slack
+brew install --cask discord
+brew install --cask java
 brew install --cask private-internet-access
+# brew install --cask adobe-creative-cloud   # personal only
 
-# personal only 
-# brew install --cask adobe-creative-cloud
+###############################################################################
+# Mac App Store Installs
+###############################################################################
 
+mas install 497799835   # Xcode
+mas install 409201541   # Pages
+mas install 409203825   # Numbers
+mas install 409183694   # Keynote
+mas install 504284434   # Other app
 
-mas install 497799835 
-mas install 409201541
-mas install 409203825 
-mas install 409183694 
-mas install 504284434
+###############################################################################
+# Stage Manager Customizations
+###############################################################################
 
-defaults write com.apple.dock autohide-delay -float 0
-defaults write com.apple.dock autohide-time-modifier -int 0
-killall Dock
+currentUser=$(ls -l /dev/console | awk '{print $3}')
+currentUID=$(id -u "$currentUser")
 
-defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationcenterui dndStart -integer 1
-defaults -currentHost write ~/Library/Preferences/ByHost/com.apple.notificationcenterui dndEnd -integer 0
-killall NotificationCenter
+# Enable Stage Manager
+launchctl asuser $currentUID sudo -iu "$currentUser" defaults write com.apple.WindowManager GloballyEnabled -bool true
 
+# Hide recent apps sidebar
+launchctl asuser $currentUID sudo -iu "$currentUser" defaults write com.apple.WindowManager AutoHide -bool true
 
-#wget https://github.com/glouel/AerialCompanion/releases/latest/download/AerialCompanion.dmg
-#wget https://discord.com/api/download?platform=osx
+# Set window grouping to "One at a Time"
+launchctl asuser $currentUID sudo -iu "$currentUser" defaults write com.apple.WindowManager AppWindowGroupingBehavior -bool true
 
+# External display behavior: full desktop for stage strip
+launchctl asuser $currentUID sudo -iu "$currentUser" defaults write com.apple.WindowManager StandardStageStripShowsFullDesktop -bool true
+
+# Optional: refresh Finder to ensure desktop click behavior works
+defaults write com.apple.finder CreateDesktop -bool true
+killall Finder
+
+###############################################################################
+# Cleanup
+###############################################################################
 
 echo "Running brew cleanup..."
 brew cleanup
 
-
-
-
-
+echo "Setup complete!"
