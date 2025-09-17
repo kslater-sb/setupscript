@@ -112,6 +112,9 @@ brew install cmake
 brew install postgresql
 brew install python
 brew install speedtest
+brew install pkg-config
+brew install librdkafka
+
 
 # Powerline fonts
 echo "Installing Powerline fonts..."
